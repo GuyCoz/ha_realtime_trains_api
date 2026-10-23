@@ -78,8 +78,6 @@ You need a Realtime Trains API account and token to use this integration.
 
 The API uses Bearer token authentication. If you are issued a long-lived **refresh token**, this integration automatically exchanges it for a short-lived access token using `/api/get_access_token` and renews it when required.
 
-> **Important:** API tokens should be treated as credentials. Do not commit your token to GitHub or include it directly in files you intend to share.
-
 ---
 
 # Installation
