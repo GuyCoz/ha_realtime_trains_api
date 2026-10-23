@@ -59,28 +59,42 @@ Alternatively, you can use the built-in `uk_transport` integration (see https://
 ```yaml
 sensor:
   - platform: realtime_trains_api
-    username: '[Your RTT API Auth Credentials username]'
-    password: '[Your RTT API Auth Credentials password]' # (recommended to use '!secret my_rtt_password' and add to secrets.yaml)
+    refresh_token: !secret rtt_refresh_token
+
+    # Polling interval. Be mindful of the Realtime Trains API rate limits,
+    # particularly if using multiple queries and journey detail lookups.
     scan_interval:
-      seconds: 90 # this defaults to 60 seconds (in HA) so you can change this.  Dont set it too frequent or you might get blocked for abuse of the RTT API.
-    auto_adjust_scans: true # If no depatures are retrieved, back off polling interval to 30 mins (until there are some trains)
+      minutes: 3
+
+    # If no departures are returned, reduce the polling frequency.
+    auto_adjust_scans: true
+
     queries:
-      - origin: WAL
-        destination: WAT
-        # journey_data_for_next_X_trains is optional but highly recommended, 
-        # Defaults to 0. 
-        # Entering 5 here means the first 5 departures from the origin 
-        # (WAL in this case) to destination (WAT in this case) will hit 
-        # the API to lookup the number of stops, journey time and estimated
-        # arrival time to the destination (WAT in this case).
-        journey_data_for_next_X_trains: 5 
+      - origin: KGX
+        destination: YRK
+
+        # Retrieve detailed journey information for the next two trains.
+        journey_data_for_next_X_trains: 2
+
+        # Optional intermediate stations to include in the journey details.
         stops_of_interest:
-          - VXH # a stop_of_interest will add data about this stop to each train's data (only if journey_data is gathered for that journey).  Means you can add more context to the train journey (e.g. my commute can start at two stops for some trains, only one for others meaning it might change my choice of train if I can get on at VXH instead of WAT)
-      - origin: WAT
-        destination: WAL
-        sensor_name: My Custom Journey # this will appear as 'sensor.my_custom_journey'
-        time_offset:
-          minutes: 20 # This will display departures from now+20 minutes - useful if the station is 20 minutes travel/walk away.
+          - PBO
+
+        sensor_name: kings_cross_to_york
 ```
-5. Restart HA
-6. Your `sensor` will be named something like `sensor.next_train_from_wal_to_wat` (unless you specified a `sensor_name`) for each query you defined in your configuration.
+5. To your `secrets.yaml` add:
+```yaml
+rtt_refresh_token: "YOUR_REFRESH_TOKEN"
+```
+7. Restart HA
+8. Your `sensor` will be named something like `sensor.kings_cross_to_york` (unless you specified a `sensor_name`) for each query you defined in your configuration.
+
+In the example above:
+
+KGX is the origin station (London King's Cross).
+YRK is the destination station (York).
+PBO is included as a stop of interest (Peterborough).
+journey_data_for_next_X_trains controls how many upcoming services have detailed journey information retrieved, including destination arrival forecasts and stops of interest.
+Service-detail responses are cached temporarily to reduce API usage.
+
+
